@@ -3,25 +3,22 @@ package cache
 import (
 	"cstore/pkg/logging"
 	"github.com/go-redis/redis"
-	"os"
 	"strconv"
 )
 
 var RedisClient *redis.Client
 
-func Redis() {
-	db, _ := strconv.ParseUint(os.Getenv("REDIS_DB"), 10, 64)
+func init() {
+	db, _ := strconv.ParseUint("1", 10, 64)
 	client := redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_ADDR"),
-		Password: os.Getenv("REDIS_PW"),
-		DB:       int(db),
+		Addr: "0.0.0.0:6379",
+		DB:   int(db),
 	})
-	_, err := client.Ping().Result()
-
+	pong, err := client.Ping().Result()
+	logging.Info(pong)
 	if err != nil {
 		logging.Info(err)
 		panic(err)
 	}
-
 	RedisClient = client
 }

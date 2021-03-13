@@ -21,16 +21,6 @@ import (
 // DB 数据库链接单例
 var DB *gorm.DB
 
-func Init() {
-
-	db, err := gorm.Open("mysql", "hello")
-	db.LogMode(true)
-	// Error
-	if err != nil {
-		panic(err)
-	}
-}
-
 // Database 在中间件中初始化mysql链接
 func Database(connString string) {
 	db, err := gorm.Open("mysql", connString)
@@ -51,6 +41,7 @@ func Database(connString string) {
 	db.DB().SetMaxOpenConns(100)
 	//超时
 	db.DB().SetConnMaxLifetime(time.Second * 30)
+	db.DB()
 
 	DB = db
 
