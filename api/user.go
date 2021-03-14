@@ -18,8 +18,20 @@ func GetUser(c *gin.Context) {
 
 }
 
+func Login(c *gin.Context) {
+	var login svs.LoginForm
+	if err := c.ShouldBind(&login); err != nil {
+
+		c.JSON(500, err)
+		return
+	}
+	rep := login.Login()
+	c.JSON(200, rep)
+
+}
+
 /*
-你好
+创建新用户
 */
 func CreateUser(c *gin.Context) {
 	//session := sessions.Default(c)

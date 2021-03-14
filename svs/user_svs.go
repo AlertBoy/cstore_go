@@ -22,6 +22,42 @@ type UserLitmit struct {
 	Start uint32 `form:"start" json:"start"`
 }
 
+/*用户登录form*/
+type LoginForm struct {
+	UserName string `form:"username" json:"username" `
+	Password string `form:"password" json:"password"`
+}
+
+func (l *LoginForm) Login() *serializer.Response {
+
+	code := common.SUCCESS
+	if l.UserName == "" || l.Password == "" {
+		code = common.ERROR_NOT_EXIST_USER
+		return &serializer.Response{
+			Status: code,
+			Msg:    common.GetMsg(code),
+		}
+	}
+	user := model.User{
+		UserName: l.UserName,
+	}
+	user.SetPassword(l.Password)
+	var count int
+	if err := model.DB.Model(&user).Where("user_name=? and password_digest=?", l.UserName, user.PasswordDigest).Count(&count).Error; err != nil {
+		return common.ErrorResponse(err)
+	}
+	token, err := common.GenerateToken(user.UserName, user.PasswordDigest, 1)
+	if err != nil {
+		logging.Error(err)
+		return common.ErrorResponse(err)
+	}
+	m := map[string]string{"token": token}
+	return &serializer.Response{
+		Status: code,
+		Data:   m,
+	}
+}
+
 func (s *UserSvs) Vaild(id, status interface{}) *serializer.Response {
 	var count int
 	err := model.DB.Model(&model.User{}).Where("nickname = ?", s.Nickname).Count(&count).Error

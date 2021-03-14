@@ -13,6 +13,7 @@ const (
 	NOT_EXIST_IDENTIFIER    = 202
 	ERROR                   = 500
 	INVALID_PARAMS          = 400
+	INVALID_TOKEN           = 401
 
 	ERROR_EXIST_NICK           = 10001
 	ERROR_EXIST_USER           = 10002
@@ -37,6 +38,10 @@ const (
 	ERROR_DATABASE = 30001
 
 	ERROR_OSS = 40001
+	/*
+	 应该放到配置文件中 viper is coming soon
+	*/
+	JWTSECRET = "clyTest"
 )
 
 var msg = map[int]string{
@@ -67,7 +72,8 @@ var msg = map[int]string{
 
 	ERROR_DATABASE: "数据库操作出错，请重试",
 
-	ERROR_OSS: "OSS配置错误",
+	ERROR_OSS:     "OSS配置错误",
+	INVALID_TOKEN: "token无效",
 }
 
 func GetMsg(code int) string {
@@ -79,12 +85,12 @@ func GetMsg(code int) string {
 }
 
 // ErrorResponse 返回错误消息
-func ErrorResponse(err error) serializer.Response {
+func ErrorResponse(err error) *serializer.Response {
 	if ve, ok := err.(validator.ValidationErrors); ok {
 		for _, e := range ve {
 			field := fmt.Sprintf("Field.%s", e.Field)
 			tag := fmt.Sprintf("Tag.Valid.%s", e.Tag)
-			return serializer.Response{
+			return &serializer.Response{
 				Status: 40001,
 				Msg:    fmt.Sprintf("%s%s", field, tag),
 				Error:  fmt.Sprint(err),
@@ -92,14 +98,14 @@ func ErrorResponse(err error) serializer.Response {
 		}
 	}
 	if _, ok := err.(*json.UnmarshalTypeError); ok {
-		return serializer.Response{
+		return &serializer.Response{
 			Status: 40001,
 			Msg:    "JSON类型不匹配",
 			Error:  fmt.Sprint(err),
 		}
 	}
 
-	return serializer.Response{
+	return &serializer.Response{
 		Status: 40001,
 		Msg:    "参数错误",
 		Error:  fmt.Sprint(err),
