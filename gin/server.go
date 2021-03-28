@@ -18,6 +18,11 @@ func NewRouter() *gin.Engine {
 		v1.POST("user/login", api.Login)
 
 	}
+	v2 := r.Group("/api/v12")
+	{
+		v2.POST("mq", api.MqTest)
+		v2.GET("mq", api.MqConsume)
+	}
 	authed := r.Group("/").Use(middleware.Cors(), middleware.JWT())
 	{
 		authed.POST("user", api.GetUser)

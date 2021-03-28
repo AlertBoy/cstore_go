@@ -2,8 +2,10 @@ package api
 
 import (
 	"cstore/common"
+	"cstore/middleware"
 	svs "cstore/svs"
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 func GetUser(c *gin.Context) {
@@ -25,7 +27,10 @@ func Login(c *gin.Context) {
 		c.JSON(500, err)
 		return
 	}
-	rep := login.Login()
+	now := time.Now()
+	rep := login.Login(time.Now())
+
+	println("time paste", time.Since(now).Milliseconds())
 	c.JSON(200, rep)
 
 }
@@ -42,4 +47,18 @@ func CreateUser(c *gin.Context) {
 	} else {
 		c.JSON(200, common.ErrorResponse(err))
 	}
+}
+
+/*
+操作rabbitmq
+*/
+func MqTest(c *gin.Context) {
+	middleware.Generate()
+}
+
+/*
+操作rabbitmq
+*/
+func MqConsume(c *gin.Context) {
+	middleware.Consume()
 }

@@ -7,7 +7,8 @@ import (
 
 func main() {
 	config.Init()
+
 	engine := server.NewRouter()
 
-	engine.Run(":3030")
+	engine.Run(":8080")
 }

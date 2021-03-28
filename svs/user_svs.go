@@ -1,11 +1,14 @@
 package svs
 
 import (
+	"cstore/cache"
 	"cstore/common"
 	"cstore/model"
 	"cstore/pkg/e"
 	"cstore/pkg/logging"
 	"cstore/serializer"
+	"encoding/json"
+	"time"
 )
 
 type UserSvs struct {
@@ -28,7 +31,7 @@ type LoginForm struct {
 	Password string `form:"password" json:"password"`
 }
 
-func (l *LoginForm) Login() *serializer.Response {
+func (l *LoginForm) Login(now time.Time) *serializer.Response {
 
 	code := common.SUCCESS
 	if l.UserName == "" || l.Password == "" {
@@ -41,20 +44,50 @@ func (l *LoginForm) Login() *serializer.Response {
 	user := model.User{
 		UserName: l.UserName,
 	}
+
+	println("user.SetPassword(l.Password)", time.Since(now).Milliseconds())
 	user.SetPassword(l.Password)
-	var count int
-	if err := model.DB.Model(&user).Where("user_name=? and password_digest=?", l.UserName, user.PasswordDigest).Count(&count).Error; err != nil {
-		return common.ErrorResponse(err)
+	println("time.Now()", time.Since(now).Milliseconds())
+	get := cache.RedisClient.Get(user.UserName)
+	println("get cache", time.Since(now).Milliseconds())
+	if get.Val() == "" {
+		logging.Info("no cache")
+
+		var count int
+		if err := model.DB.Model(&user).Where("user_name=? and password_digest=?", l.UserName, user.PasswordDigest).Count(&count).Error; err != nil {
+			return common.ErrorResponse(err)
+		}
+		marshal, err := json.Marshal(user)
+		if err != nil {
+			logging.Error(err)
+		}
+
+		set := cache.RedisClient.Set(user.UserName, string(marshal), 12*time.Hour)
+		println(set)
+		token, err := common.GenerateToken(user.UserName, user.PasswordDigest, 0)
+
+		if err != nil {
+			logging.Error(err)
+			return common.ErrorResponse(err)
+		}
+		m := map[string]string{"token": token}
+		return &serializer.Response{
+			Status: code,
+			Data:   m,
+		}
 	}
-	token, err := common.GenerateToken(user.UserName, user.PasswordDigest, 1)
+	u := get.Val()
+
+	err := json.Unmarshal([]byte(u), &user)
+	println("json Unmarshal", time.Since(now).Milliseconds())
+
 	if err != nil {
 		logging.Error(err)
-		return common.ErrorResponse(err)
+
 	}
-	m := map[string]string{"token": token}
 	return &serializer.Response{
 		Status: code,
-		Data:   m,
+		Data:   user,
 	}
 }
 

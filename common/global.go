@@ -41,9 +41,10 @@ const (
 	/*
 	 应该放到配置文件中 viper is coming soon
 	*/
-	JWTSECRET = "clyTest"
+
 )
 
+var JWTSECRET = []byte("clyTest")
 var msg = map[int]string{
 	SUCCESS:                    "ok",
 	UPDATE_PASSWORD_SUCCESS:    "修改密码成功",
